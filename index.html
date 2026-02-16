@@ -3,17 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আপনার অ্যাপের নাম</title>
+    <title>Telegram Mini App - Ad Center</title>
 
     <script src='//libtl.com/sdk.js' data-zone='10618890' data-sdk='show_10618890'></script>
 
-</head><script>
-   show_10618890().then(() => {
-       // অ্যাড শেষ হওয়ার পর যা ঘটবে (যেমন: ইউজারকে পয়েন্ট দেওয়া)
-       console.log("Ad finished!");
-   });
-</script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0e1621;
+            color: white;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 350px;
+            background: #17212b;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+        .profile-icon {
+            font-size: 50px;
+            background: #2b5278;
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            border: 2px solid #5288c1;
+        }
+        .points-display {
+            background: #242f3d;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffca28;
+        }
+        .btn-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-reward { background: #31a667; color: white; }
+        .btn-popup { background: #5288c1; color: white; }
+        .btn-withdraw { background: #e53935; color: white; margin-top: 5px; }
+        button:active { transform: scale(0.95); }
+    </style>
+</head>
 <body>
-    <h1>আপনার মিনি অ্যাপের কাজ শুরু</h1>
+
+<div class="container">
+    <div class="profile-icon">👤</div>
+    <div class="user-info">
+        <h2 id="userName">User Name</h2>
+        <div class="points-display">💰 Points: <span id="userPoints">0</span></div>
+    </div>
+
+    <div class="btn-list">
+        <button class="btn-reward" onclick="runRewarded()">📺 Get Points (Video)</button>
+        
+        <button class="btn-popup" onclick="runPopup()">🎁 Gift Reward</button>
+        
+        <button class="btn-withdraw" onclick="askWithdraw()">💸 Withdraw</button>
+    </div>
+</div>
+
+<script>
+    // ১ নম্বর ফরম্যাট: In-App Interstitial (অটোমেটিক চলবে)
+    show_10618890({
+      type: 'inApp',
+      inAppSettings: {
+        frequency: 2,
+        capping: 0.1,
+        interval: 30,
+        timeout: 5,
+        everyPage: false
+      }
+    });
+
+    let points = 0;
+    const pointsText = document.getElementById('userPoints');
+
+    // ৩ নম্বর: Rewarded Interstitial ফাংশন
+    function runRewarded() {
+        show_10618890().then(() => {
+            points += 100; // ১০১ পয়েন্ট যোগ
+            pointsText.innerText = points;
+            alert('Great! You earned 100 points.');
+        });
+    }
+
+    // ২ নম্বর: Rewarded Popup ফাংশন
+    function runPopup() {
+        show_10618890('pop').then(() => {
+            points += 50; // ৫০ পয়েন্ট যোগ
+            pointsText.innerText = points;
+            alert('Surprise! 50 points added.');
+        }).catch(e => {
+            console.log("Ad skipped or error.");
+        });
+    }
+
+    // উইথড্র ফাংশন
+    function askWithdraw() {
+        if(points < 500) {
+            alert('You need at least 500 points to withdraw!');
+        } else {
+            let number = prompt("Enter your payment number (Bkash/Nagad):");
+            if(number) {
+                alert("Withdrawal request for " + points + " points sent to admin!");
+                points = 0;
+                pointsText.innerText = points;
+            }
+        }
+    }
+</script>
+
 </body>
 </html>
