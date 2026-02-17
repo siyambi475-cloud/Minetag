@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyTech - Admin Control</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
+        
+        /* Admin Login Box */
+        #admin-login { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .btn { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 95%; }
+        
+        /* Table Style */
+        #admin-content { display: none; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #34495e; color: white; }
+        tr:hover { background: #f9f9f9; }
+        .status-pending { color: #f39c12; font-weight: bold; }
+        .btn-paid { background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn-paid:hover { background: #219150; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="admin-login">
+            <h2>Admin Login</h2>
+            <p>শুধুমাত্র অ্যাডমিনের জন্য</p>
+            <input type="password" id="admin-pass" placeholder="অ্যাডমিন পাসওয়ার্ড দিন">
+            <button class="btn" onclick="checkAdmin()">প্রবেশ করুন</button>
+        </div>
+
+        <div id="admin-content">
+            <div class="header">
+                <h1>MoneyTech Withdraw Requests</h1>
+                <p>সব পেন্ডিং রিকোয়েস্ট এখান থেকে ম্যানেজ করুন</p>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ইউজার ইমেইল</th>
+                        <th>পরিমাণ</th>
+                        <th>মেথড</th>
+                        <th>নম্বর</th>
+                        <th>স্ট্যাটাস</th>
+                        <th>অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody id="request-list">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3UN9V6N5VPR1c8UxMIVGG_NgQeiDCsSU",
+            authDomain: "monetah-e9223.firebaseapp.com",
+            projectId: "monetah-e9223",
+            storageBucket: "monetah-e9223.firebasestorage.app",
+            messagingSenderId: "378947912923",
+            appId: "1:378947912923:web:ea5be84fd77ea39ac378fe"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // অ্যাডমিন পাসওয়ার্ড চেক (আপনি চাইলে '12345' পরিবর্তন করতে পারেন)
+        window.checkAdmin = () => {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === "admin123") { // আপনার পছন্দের পাসওয়ার্ড দিন
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadWithdrawals();
+            } else {
+                alert("ভুল পাসওয়ার্ড!");
+            }
+        };
+
+        function loadWithdrawals() {
+            onSnapshot(collection(db, "withdrawals"), (snapshot) => {
+                const list = document.getElementById('request-list');
+                list.innerHTML = "";
+                
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if(data.status === "Pending") {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${data.email}</td>
+                            <td>$${data.amount.toFixed(3)}</td>
+                            <td>${data.method}</td>
+                            <td>${data.number}</td>
+                            <td class="status-pending">${data.status}</td>
+                            <td>
+                                <button class="btn-paid" onclick="completePayment('${docSnap.id}')">পেইড (Paid)</button>
+                                <button style="background:#e74c3c; color:white; border:none; padding:8px; border-radius:5px; margin-left:5px; cursor:pointer;" onclick="deleteRequest('${docSnap.id}')">ডিলিট</button>
+                            </td>
+                        `;
+                        list.appendChild(tr);
+                    }
+                });
+            });
+        }
+
+        // পেমেন্ট সম্পন্ন হলে স্ট্যাটাস আপডেট
+        window.completePayment = async (id) => {
+            if(confirm("আপনি কি পেমেন্টটি সম্পন্ন করেছেন?")) {
+                const docRef = doc(db, "withdrawals", id);
+                await updateDoc(docRef, { status: "Paid" });
+                alert("স্ট্যাটাস আপডেট হয়েছে!");
+            }
+        };
+
+        // ফেক রিকোয়েস্ট ডিলিট করার জন্য
+        window.deleteRequest = async (id) => {
+            if(confirm("এটি ডিলিট করতে চান?")) {
+                await deleteDoc(doc(db, "withdrawals", id));
+            }
+        };
+    </script>
+</body>
+</html>
