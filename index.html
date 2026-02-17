@@ -1,1 +1,175 @@
-<meta name="monetag" content="b443eccfdd596d94541c247278df9b8c">
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyTech - Withdraw System</title>
+    <script src='//libtl.com/sdk.js' data-zone='10618890' data-sdk='show_10618890'></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; padding: 15px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        input, select { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; background: #2c2c2c; color: white; }
+        button { background: #0088cc; color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 95%; font-weight: bold; margin-top: 10px; }
+        .balance { font-size: 35px; color: #00ff88; font-weight: bold; }
+        #app-content, #withdraw-section { display: none; }
+        .error { color: #ff4d4d; font-size: 14px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-section" class="card">
+        <h2>MoneyTech Login</h2>
+        <input type="email" id="email" placeholder="ইমেইল">
+        <input type="password" id="password" placeholder="পাসওয়ার্ড">
+        <button onclick="handleSignUp()">Sign Up</button>
+        <button onclick="handleLogin()" style="background: #444;">Login</button>
+    </div>
+
+    <div id="app-content">
+        <div class="card">
+            <p>আপনার ব্যালেন্স</p>
+            <div class="balance">$<span id="user-balance">0.000</span></div>
+            <button onclick="showVideoAd()" style="background: #27ae60;">Watch Ad & Earn $0.005</button>
+            <button onclick="toggleWithdraw()">Withdraw Money</button>
+        </div>
+
+        <div id="withdraw-section" class="card">
+            <h3>Withdraw Request</h3>
+            <p style="font-size: 12px;">মিনিমাম উইথড্র: $1.000</p>
+            <input type="number" id="withdraw-amount" placeholder="কত ডলার (যেমন: 1.5)">
+            <select id="payment-method">
+                <option value="Bkash">Bkash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Rocket">Rocket</option>
+            </select>
+            <input type="text" id="payment-number" placeholder="আপনার নাম্বার দিন">
+            <button onclick="submitWithdraw()" style="background: #f39c12;">Submit Request</button>
+            <button onclick="toggleWithdraw()" style="background: #333;">Cancel</button>
+        </div>
+
+        <button onclick="logout()" style="background: #e74c3c; margin-top: 20px;">Logout</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3UN9V6N5VPR1c8UxMIVGG_NgQeiDCsSU",
+            authDomain: "monetah-e9223.firebaseapp.com",
+            projectId: "monetah-e9223",
+            storageBucket: "monetah-e9223.firebasestorage.app",
+            messagingSenderId: "378947912923",
+            appId: "1:378947912923:web:ea5be84fd77ea39ac378fe"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentBalance = 0;
+
+        // --- Authentication ---
+        window.handleSignUp = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try {
+                const res = await createUserWithEmailAndPassword(auth, email, pass);
+                await setDoc(doc(db, "users", res.user.uid), { balance: 0.000, email: email });
+                alert("অ্যাকাউন্ট তৈরি হয়েছে!");
+            } catch (err) { alert(err.message); }
+        };
+
+        window.handleLogin = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            catch (err) { alert("লগইন ভুল হয়েছে!"); }
+        };
+
+        window.logout = () => signOut(auth);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                fetchUserData(user.uid);
+            } else {
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('app-content').style.display = 'none';
+            }
+        });
+
+        async function fetchUserData(uid) {
+            const docSnap = await getDoc(doc(db, "users", uid));
+            if (docSnap.exists()) {
+                currentBalance = docSnap.data().balance;
+                document.getElementById('user-balance').innerText = currentBalance.toFixed(3);
+            }
+        }
+
+        // --- Monetag Ads ---
+        window.showVideoAd = () => {
+            show_10618890().then(async () => {
+                const user = auth.currentUser;
+                if (user) {
+                    await updateDoc(doc(db, "users", user.uid), { balance: increment(0.005) });
+                    fetchUserData(user.uid);
+                    alert("রিওয়ার্ড যোগ করা হয়েছে!");
+                }
+            }).catch(e => alert("অ্যাড লোড হয়নি।"));
+        };
+
+        // --- Withdraw Logic ---
+        window.toggleWithdraw = () => {
+            const div = document.getElementById('withdraw-section');
+            div.style.display = div.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.submitWithdraw = async () => {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const method = document.getElementById('payment-method').value;
+            const number = document.getElementById('payment-number').value;
+            const user = auth.currentUser;
+
+            if (amount < 1.0) {
+                alert("মিনিমাম উইথড্র $1.000");
+                return;
+            }
+            if (amount > currentBalance) {
+                alert("আপনার ব্যালেন্স পর্যাপ্ত নয়!");
+                return;
+            }
+            if (!number) {
+                alert("পেমেন্ট নাম্বার দিন।");
+                return;
+            }
+
+            try {
+                // ১. উইথড্র রিকোয়েস্ট ডাটাবেসে সেভ করা
+                await addDoc(collection(db, "withdrawals"), {
+                    uid: user.uid,
+                    email: user.email,
+                    amount: amount,
+                    method: method,
+                    number: number,
+                    status: "Pending",
+                    timestamp: serverTimestamp()
+                });
+
+                // ২. ইউজারের মেইন ব্যালেন্স থেকে টাকা কেটে নেওয়া
+                await updateDoc(doc(db, "users", user.uid), {
+                    balance: increment(-amount)
+                });
+
+                alert("রিকোয়েস্ট পাঠানো হয়েছে! ব্যালেন্স আপডেট করা হয়েছে।");
+                fetchUserData(user.uid);
+                toggleWithdraw();
+            } catch (err) {
+                alert("কিছু একটা ভুল হয়েছে!");
+            }
+        };
+    </script>
+</body>
+</html>
