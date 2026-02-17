@@ -1,138 +1,137 @@
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyTech - Ultimate Earn</title>
+    <script src='//libtl.com/sdk.js' data-zone='10618890' data-sdk='show_10618890'></script>
+    <script src='//libtl.com/sdk.js' data-zone='10618891' data-sdk='show_10618891'></script>
+    <script src='//libtl.com/sdk.js' data-zone='10618893' data-sdk='show_10618893'></script>
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyD3UN9V6N5VPR1c8UxMIVGG_NgQeiDCsSU",
-        authDomain: "monetah-e9223.firebaseapp.com",
-        projectId: "monetah-e9223",
-        storageBucket: "monetah-e9223.firebasestorage.app",
-        messagingSenderId: "378947912923",
-        appId: "1:378947912923:web:ea5be84fd77ea39ac378fe"
-    };
+    <style>
+        :root { --main: #00ff88; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; text-align: center; }
+        .card { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #333; margin-bottom: 20px; }
+        .balance { font-size: 40px; color: var(--main); font-weight: bold; margin: 10px 0; }
+        .btn { width: 100%; padding: 16px; margin: 10px 0; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        input, select { width: 92%; padding: 14px; margin: 8px 0; border-radius: 10px; border: none; background: #2c2c2c; color: white; }
+        #auth-section, #app-content, #withdraw-section { display: none; }
+    </style>
+</head>
+<body>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    let balance = 0;
+    <div id="auth-section" class="card">
+        <h2>MoneyTech Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button class="btn" style="background:var(--main); color:black;" onclick="handleSignUp()">Create Account</button>
+        <button class="btn" style="background:#444; color:white;" onclick="handleLogin()">Login</button>
+    </div>
 
-    // অটো ইন-অ্যাপ অ্যাড
-    window.onload = () => { 
-        if(typeof show_10618893 === 'function') 
-            show_10618893({ type: 'inApp' }); 
-    };
+    <div id="app-content">
+        <div class="card">
+            <p style="color:#888;">আপনার ব্যালেন্স</p>
+            <div class="balance">$<span id="user-balance">0.000</span></div>
+            <p id="user-email" style="font-size:10px; color:#555;"></p>
+        </div>
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
-            document.getElementById('user-email').innerText = user.email;
-            fetchData(user.uid);
-        } else {
-            document.getElementById('auth-section').style.display = 'block';
-            document.getElementById('app-content').style.display = 'none';
-        }
-    });
+        <div class="card">
+            <h3>কাজ করে আয় করুন</h3>
+            <button class="btn" style="background:#27ae60; color:white;" onclick="playAd('video')">Watch Video Ad 1 ($0.005)</button>
+            <button class="btn" style="background:#f39c12; color:white;" onclick="playAd('popup')">Watch Video Ad 2 ($0.003)</button>
+        </div>
 
-    async function fetchData(uid) {
-        const snap = await getDoc(doc(db, "users", uid));
-        if (snap.exists()) {
-            balance = snap.data().balance;
-            document.getElementById('user-balance').innerText = balance.toFixed(3);
-        }
-    }
+        <button class="btn" style="background:#3498db; color:white;" onclick="toggleWithdraw()">Withdraw Money</button>
 
-    // অ্যাড ফাংশন (Popup বাদ, Direct Link ব্যবহার)
-    window.playAd = (type) => {
-        if (type === 'video') {
-            show_10618890()
-                .then(() => addReward(0.005))
-                .catch(() => alert("অ্যাড পুরোপুরি শেষ করুন।"));
-        } else {
-            // Popup Ad বাদ
-            window.open("https://omg10.com/4/10618909", "_blank");
+        <div id="withdraw-section" class="card">
+            <h3>টাকা উত্তোলন</h3>
+            <input type="number" id="w-amount" placeholder="পরিমাণ (Min $1.0)">
+            <select id="w-method"><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option></select>
+            <input type="text" id="w-number" placeholder="নম্বর দিন">
+            <button class="btn" style="background:var(--main); color:black;" onclick="submitWithdraw()">Confirm</button>
+        </div>
+        <button onclick="logout()" style="color:#666; background:none; border:none; margin-top:20px; cursor:pointer;">Logout</button>
+    </div>
 
-            // Reward যোগ
-            addReward(0.003);
-        }
-    };
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    async function addReward(amt) {
-        if (auth.currentUser) {
-            await updateDoc(
-                doc(db, "users", auth.currentUser.uid), 
-                { balance: increment(amt) }
-            );
-            fetchData(auth.currentUser.uid);
-            alert("ব্যালেন্স যোগ হয়েছে!");
-        }
-    }
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3UN9V6N5VPR1c8UxMIVGG_NgQeiDCsSU",
+            authDomain: "monetah-e9223.firebaseapp.com",
+            projectId: "monetah-e9223",
+            storageBucket: "monetah-e9223.firebasestorage.app",
+            messagingSenderId: "378947912923",
+            appId: "1:378947912923:web:ea5be84fd77ea39ac378fe"
+        };
 
-    // উইথড্র ফাংশন
-    window.toggleWithdraw = () => {
-        const s = document.getElementById('withdraw-section');
-        s.style.display = s.style.display === 'block' ? 'none' : 'block';
-    };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let balance = 0;
 
-    window.submitWithdraw = async () => {
-        const amt = parseFloat(document.getElementById('w-amount').value);
-        const num = document.getElementById('w-number').value;
+        window.onload = () => { if(typeof show_10618893 === 'function') show_10618893({ type: 'inApp' }); };
 
-        if (amt >= 1.0 && amt <= balance && num) {
-            try {
-                await addDoc(collection(db, "withdrawals"), {
-                    uid: auth.currentUser.uid,
-                    email: auth.currentUser.email,
-                    amount: amt,
-                    method: document.getElementById('w-method').value,
-                    number: num,
-                    status: "Pending",
-                    time: serverTimestamp()
-                });
-
-                await updateDoc(
-                    doc(db, "users", auth.currentUser.uid), 
-                    { balance: increment(-amt) }
-                );
-
-                fetchData(auth.currentUser.uid);
-                alert("Withdraw Request Sent Success!");
-
-            } catch (e) {
-                alert("Error sending request.");
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                document.getElementById('user-email').innerText = user.email;
+                fetchData(user.uid);
+            } else {
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('app-content').style.display = 'none';
             }
-        } else {
-            alert("ব্যালেন্স কম বা ভুল তথ্য দিয়েছেন (Min $1.0)");
+        });
+
+        async function fetchData(uid) {
+            const snap = await getDoc(doc(db, "users", uid));
+            if (snap.exists()) {
+                balance = snap.data().balance;
+                document.getElementById('user-balance').innerText = balance.toFixed(3);
+            }
         }
-    };
 
-    // Auth ফাংশন
-    window.handleSignUp = async () => {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
+        window.playAd = (type) => {
+            // পপআপ এবং ভিডিও উভয় জায়গায় এখন আপনার ভিডিও অ্যাড (10618890) লোড হবে
+            const reward = type === 'video' ? 0.005 : 0.003;
+            
+            show_10618890().then(async () => {
+                if (auth.currentUser) {
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(reward) });
+                    fetchData(auth.currentUser.uid);
+                    alert("ব্যালেন্স যোগ হয়েছে!");
+                }
+            }).catch(() => alert("অ্যাড পুরোপুরি শেষ করুন।"));
+        };
 
-        try {
-            const res = await createUserWithEmailAndPassword(auth, e, p);
-            await setDoc(
-                doc(db, "users", res.user.uid), 
-                { balance: 0.0, email: e }
-            );
-        } catch (err) { 
-            alert(err.message); 
-        }
-    };
+        window.handleSignUp = async () => {
+            const e = document.getElementById('email').value, p = document.getElementById('password').value;
+            try {
+                const res = await createUserWithEmailAndPassword(auth, e, p);
+                await setDoc(doc(db, "users", res.user.uid), { balance: 0.0, email: e });
+            } catch (err) { alert(err.message); }
+        };
 
-    window.handleLogin = async () => {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
+        window.handleLogin = async () => {
+            const e = document.getElementById('email').value, p = document.getElementById('password').value;
+            try { await signInWithEmailAndPassword(auth, e, p); } catch (err) { alert("Login failed!"); }
+        };
 
-        try { 
-            await signInWithEmailAndPassword(auth, e, p); 
-        } catch (err) { 
-            alert("Login failed!"); 
-        }
-    };
+        window.logout = () => signOut(auth);
+        window.toggleWithdraw = () => { const s = document.getElementById('withdraw-section'); s.style.display = s.style.display === 'block' ? 'none' : 'block'; };
 
-    window.logout = () => signOut(auth);
-        </script>
+        window.submitWithdraw = async () => {
+            const amt = parseFloat(document.getElementById('w-amount').value), num = document.getElementById('w-number').value;
+            if (amt >= 1.0 && amt <= balance && num) {
+                await addDoc(collection(db, "withdrawals"), { uid: auth.currentUser.uid, email: auth.currentUser.email, amount: amt, method: document.getElementById('w-method').value, number: num, status: "Pending", time: serverTimestamp() });
+                await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+                fetchData(auth.currentUser.uid);
+                alert("Withdraw Request Sent!");
+            } else { alert("ব্যালেন্স কম বা ভুল নম্বর!"); }
+        };
+    </script>
+</body>
+</html>
