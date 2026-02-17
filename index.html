@@ -30,13 +30,13 @@
 
     <div id="app-content">
         <div class="card">
-            <p style="color:#888;">আপনার ব্যালেন্স</p>
+            <p style="color:#888;">my balance</p>
             <div class="balance">$<span id="user-balance">0.000</span></div>
             <p id="user-email" style="font-size:10px; color:#555;"></p>
         </div>
 
         <div class="card">
-            <h3>কাজ করে আয় করুন</h3>
+            <h3>easy earn</h3>
             <button class="btn" style="background:#27ae60; color:white;" onclick="playAd('video')">Watch Video Ad 1 ($0.005)</button>
             <button class="btn" style="background:#f39c12; color:white;" onclick="playAd('popup')">Watch Video Ad 2 ($0.003)</button>
         </div>
@@ -44,10 +44,10 @@
         <button class="btn" style="background:#3498db; color:white;" onclick="toggleWithdraw()">Withdraw Money</button>
 
         <div id="withdraw-section" class="card">
-            <h3>টাকা উত্তোলন</h3>
+            <h3>withdraw</h3>
             <input type="number" id="w-amount" placeholder="পরিমাণ (Min $0.500)">
             <select id="w-method"><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option></select>
-            <input type="text" id="w-number" placeholder="নম্বর দিন">
+            <input type="text" id="w-number" placeholder="payment number or beep20 address">
             <button class="btn" style="background:var(--main); color:black;" onclick="submitWithdraw()">Confirm</button>
         </div>
         <button onclick="logout()" style="color:#666; background:none; border:none; margin-top:20px; cursor:pointer;">Logout</button>
@@ -102,9 +102,9 @@
                 if (auth.currentUser) {
                     await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(reward) });
                     fetchData(auth.currentUser.uid);
-                    alert("ব্যালেন্স যোগ হয়েছে!");
+                    alert("balance add!");
                 }
-            }).catch(() => alert("অ্যাড পুরোপুরি শেষ করুন।"));
+            }).catch(() => alert("full Watch।"));
         };
 
         window.handleSignUp = async () => {
