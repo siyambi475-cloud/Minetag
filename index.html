@@ -3,64 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoneyTech - Earn Online</title>
+    <title>MoneyTech - Full Version</title>
+    
     <script src='//libtl.com/sdk.js' data-zone='10618890' data-sdk='show_10618890'></script>
+    <script src='//libtl.com/sdk.js' data-zone='10618891' data-sdk='show_10618891'></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; margin: 0; padding: 15px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .balance { font-size: 35px; color: #00ff88; font-weight: bold; margin: 10px 0; }
-        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .btn-green { background: #27ae60; color: white; }
-        .btn-orange { background: #f39c12; color: white; }
-        .btn-blue { background: #3498db; color: white; }
-        input, select { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; background: #2c2c2c; color: white; }
-        #auth-section, #app-content, #withdraw-section { display: none; }
+        :root { --p: #00ff88; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: sans-serif; background: var(--bg); color: white; text-align: center; padding: 20px; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        .balance { font-size: 38px; color: var(--p); font-weight: bold; margin: 10px 0; }
+        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; background: #2c2c2c; color: white; }
+        #auth-section, #app-content { display: none; }
     </style>
 </head>
 <body>
 
     <div id="auth-section" class="card">
         <h2>MoneyTech Login</h2>
-        <input type="email" id="email" placeholder="আপনার ইমেইল">
+        <input type="email" id="email" placeholder="ইমেইল">
         <input type="password" id="password" placeholder="পাসওয়ার্ড">
-        <button class="btn btn-blue" onclick="handleSignUp()">নতুন অ্যাকাউন্ট তৈরি করুন</button>
-        <button class="btn" style="background:#444" onclick="handleLogin()">লগইন করুন</button>
+        <button class="btn" style="background:#0088cc" onclick="handleSignUp()">সাইন আপ (Create Account)</button>
+        <button class="btn" style="background:#444" onclick="handleLogin()">লগইন (Login)</button>
     </div>
 
     <div id="app-content">
         <div class="card">
-            <p>বর্তমান ব্যালেন্স</p>
+            <p>আপনার ব্যালেন্স</p>
             <div class="balance">$<span id="user-balance">0.000</span></div>
+            <p id="user-info" style="font-size:11px; color:#555;"></p>
         </div>
 
         <div class="card">
-            <h3>কাজ করে আয় করুন</h3>
-            <button class="btn btn-green" onclick="playRewardedInterstitial()">Watch Video Ad ($0.005)</button>
-            <button class="btn btn-orange" onclick="playRewardedPopup()">Show Popup Ad ($0.003)</button>
+            <h3>টাকা আয় করুন</h3>
+            <button class="btn" style="background:#27ae60" onclick="playVideoAd()">Watch Video Ad ($0.005)</button>
+            
+            <button class="btn" style="background:#f39c12" onclick="playPopupAd()">Show Popup Ad ($0.003)</button>
         </div>
 
-        <button class="btn btn-blue" onclick="toggleWithdraw()">টাকা উত্তোলন (Withdraw)</button>
-
-        <div id="withdraw-section" class="card">
-            <h3>Withdraw Request</h3>
-            <p style="font-size:12px">মিনিমাম উইথড্র $1.000</p>
-            <input type="number" id="withdraw-amount" placeholder="ডলারের পরিমাণ (যেমন: 1.0)">
-            <select id="payment-method">
-                <option value="Bkash">Bkash</option>
-                <option value="Nagad">Nagad</option>
-                <option value="Rocket">Rocket</option>
-            </select>
-            <input type="text" id="payment-number" placeholder="আপনার পেমেন্ট নম্বর">
-            <button class="btn btn-orange" onclick="submitWithdraw()">রিকোয়েস্ট পাঠান</button>
-        </div>
-
-        <button onclick="logout()" style="background:none; border:none; color:#777; margin-top:20px; cursor:pointer;">Logout</button>
+        <button onclick="logout()" style="color:#777; background:none; border:none; cursor:pointer;">Log Out</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD3UN9V6N5VPR1c8UxMIVGG_NgQeiDCsSU",
@@ -74,89 +62,67 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        let currentBalance = 0;
 
-        // In-App Interstitial Ad (Automatic)
-        show_10618890({
-          type: 'inApp',
-          inAppSettings: { frequency: 2, capping: 0.1, interval: 30, timeout: 5, everyPage: false }
-        });
-
-        // Auth Logic
+        // লগইন চেক
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('auth-section').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
-                fetchData(user.uid);
+                document.getElementById('user-info').innerText = user.email;
+                updateUI(user.uid);
             } else {
                 document.getElementById('auth-section').style.display = 'block';
                 document.getElementById('app-content').style.display = 'none';
             }
         });
 
-        async function fetchData(uid) {
+        async function updateUI(uid) {
             const snap = await getDoc(doc(db, "users", uid));
             if (snap.exists()) {
-                currentBalance = snap.data().balance;
-                document.getElementById('user-balance').innerText = currentBalance.toFixed(3);
+                document.getElementById('user-balance').innerText = snap.data().balance.toFixed(3);
             }
         }
 
+        // বিজ্ঞাপন দেখে ব্যালেন্স অ্যাড হওয়া (Fixed)
+        window.playVideoAd = () => {
+            show_10618890().then(() => {
+                addMoney(0.005);
+            }).catch(() => alert("অ্যাড লোড হয়নি!"));
+        };
+
+        window.playPopupAd = () => {
+            show_10618891('pop').then(() => {
+                addMoney(0.003);
+            }).catch(() => alert("পপআপ অ্যাড ব্লক করা আছে। সেটিংস থেকে এলাউ করুন।"));
+        };
+
+        async function addMoney(amount) {
+            if (auth.currentUser) {
+                const userRef = doc(db, "users", auth.currentUser.uid);
+                await updateDoc(userRef, { balance: increment(amount) });
+                updateUI(auth.currentUser.uid);
+                alert("আপনার ব্যালেন্স যোগ হয়েছে!");
+            }
+        }
+
+        // সাইন আপ এবং লগইন ফাংশন
         window.handleSignUp = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             try {
                 const res = await createUserWithEmailAndPassword(auth, email, pass);
-                await setDoc(doc(db, "users", res.user.uid), { balance: 0.000, email: email });
-                alert("Account Created!");
-            } catch (err) { alert(err.message); }
+                await setDoc(doc(db, "users", res.user.uid), { balance: 0.0, email: email });
+                alert("অ্যাকাউন্ট তৈরি সফল!");
+            } catch (e) { alert("ভুল: " + e.message); }
         };
 
         window.handleLogin = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            try { await signInWithEmailAndPassword(auth, email, pass); } catch (err) { alert("Login Error!"); }
+            try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { alert("ইমেইল বা পাসওয়ার্ড ভুল!"); }
         };
 
         window.logout = () => signOut(auth);
-
-        // Monetag Ad Play Functions
-        window.playRewardedInterstitial = () => {
-            show_10618890().then(() => addReward(0.005)).catch(e => alert("Ad Error"));
-        };
-
-        window.playRewardedPopup = () => {
-            show_10618890('pop').then(() => addReward(0.003)).catch(e => alert("Ad Error"));
-        };
-
-        async function addReward(amount) {
-            if (auth.currentUser) {
-                await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(amount) });
-                fetchData(auth.currentUser.uid);
-                alert("You earned reward!");
-            }
-        }
-
-        window.toggleWithdraw = () => {
-            const el = document.getElementById('withdraw-section');
-            el.style.display = el.style.display === 'block' ? 'none' : 'block';
-        };
-
-        window.submitWithdraw = async () => {
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            const num = document.getElementById('payment-number').value;
-            if (amount >= 1.0 && amount <= currentBalance && num) {
-                await addDoc(collection(db, "withdrawals"), {
-                    uid: auth.currentUser.uid,
-                    email: auth.currentUser.email,
-                    amount, method: document.getElementById('payment-method').value,
-                    number: num, status: "Pending", time: serverTimestamp()
-                });
-                await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amount) });
-                fetchData(auth.currentUser.uid);
-                alert("Request Sent!");
-            } else { alert("Invalid Request!"); }
-        };
     </script>
 </body>
 </html>
